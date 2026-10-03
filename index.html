@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Estudio DJ PRO - Jeremias</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}body{background:#0a0a14;color:#fff;font-family:system-ui;padding:16px}
+.header{text-align:center;padding:24px 0}.header h1{font-size:30px;font-weight:900;background:linear-gradient(90deg,#00f2ff,#7c3aed,#ff2d55);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:#181828;border-radius:22px;padding:20px;margin:16px auto;max-width:520px;border:1px solid #2a2a44}
+.btn{width:100%;padding:15px;border:none;border-radius:14px;background:#00e5ff;color:#000;font-weight:900;font-size:15px;margin:8px 0;cursor:pointer}
+.btn.rec{background:#ff2d55;color:#fff}
+.btn.sec{background:#262640;color:#00e5ff;border:1px solid #00e5ff40}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}
+.pad{aspect-ratio:1;background:#262640;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:22px;cursor:pointer}
+.step{height:32px;background:#262640;border-radius:8px;cursor:pointer}.step.on{background:#00e5ff}
+.seq{display:grid;grid-template-columns:42px repeat(8,1fr);gap:5px;margin:8px 0;font-size:11px;color:#888;align-items:center}
+.wave{height:56px;background:#0e0e1e;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:3px;margin:10px 0}
+.bar{width:4px;background:#00e5ff;border-radius:4px;height:8px}
+.badge{background:#00e5ff22;color:#00e5ff;padding:4px 10px;border-radius:20px;font-size:11px;display:inline-block}
+audio{width:100%;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="header"><h1>🎧 MI ESTUDIO DJ PRO</h1><p style="color:#666;font-size:13px">por Jeremias - Bermejo, Mendoza v2.0 PRO</p></div>
+
+<div class="card"><h2>🎤 Mi voz</h2><span class="badge" id="st">Listo para grabar</span><div class="wave" id="wave"></div><button class="btn" id="rec">🎙️ Grabar mi voz</button><audio id="aud" controls style="display:none"></audio><button class="btn sec" id="down" style="display:none">⬇️ Guardar mi voz</button></div>
+
+<div class="card"><h2>🎹 Batería - Toca los pads</h2><div class="grid"><div class="pad" data-s="kick">🥁<small>KICK</small></div><div class="pad" data-s="snare">🥁<small>SNARE</small></div><div class="pad" data-s="hihat">✨<small>HIHAT</small></div><div class="pad" data-s="clap">👏<small>CLAP</small></div></div><div id="seq"></div><button class="btn" id="play">🥁 PLAY Ritmo</button><button class="btn sec" id="stop">⏹️ STOP</button></div>
+
+<div class="card"><h2>✨ IA Musical</h2><span class="badge" id="iaSt">IA lista</span><button class="btn" id="ia">✨ Crear canción con IA</button><button class="btn sec" id="bass">🎸 Bajo automático</button></div>
+
+<div class="card"><h2>💿 Exportar</h2><button class="btn" id="exp">📦 Exportar mi voz</button><button class="btn sec" id="share">📱 Compartir</button></div><script>
+let actx;const AC=()=>actx||(actx=new(window.AudioContext||window.webkitAudioContext)());
+function sound(t,f=0){const c=AC(),n=c.currentTime;if(t=='kick'){const o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(150,n);o.frequency.exponentialRampToValueAtTime(0.01,n+0.5);g.gain.setValueAtTime(1,n);g.gain.exponentialRampToValueAtTime(0.01,n+0.5);o.connect(g).connect(c.destination);o.start();o.stop(n+0.5)}else if(t=='snare'||t=='hihat'||t=='clap'){const len=t=='hihat'?0.08:0.18;const buf=c.createBuffer(1,c.sampleRate*len,c.sampleRate),d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;const s=c.createBufferSource();s.buffer=buf;const g=c.createGain(),fil=c.createBiquadFilter();fil.type='highpass';fil.frequency.value=t=='hihat'?6000:1000;g.gain.setValueAtTime(t=='hihat'?0.3:1,n);g.gain.exponentialRampToValueAtTime(0.01,n+len);s.connect(fil).connect(g).connect(c.destination);s.start();if(t=='clap')setTimeout(()=>sound('snare'),90)}else if(t=='note'){const o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.value=f;g.gain.setValueAtTime(0.35,n);g.gain.exponentialRampToValueAtTime(0.01,n+0.7);o.connect(g).connect(c.destination);o.start();o.stop(n+0.7)}}
+document.querySelectorAll('.pad').forEach(p=>p.onclick=()=>sound(p.dataset.s));
+const wave=document.getElementById('wave');for(let i=0;i<24;i++){const b=document.createElement('div');b.className='bar';wave.appendChild(b)}let wavI;function animW(on){if(wavI)clearInterval(wavI);if(!on){wave.querySelectorAll('.bar').forEach(b=>b.style.height='8px');return}wavI=setInterval(()=>{wave.querySelectorAll('.bar').forEach(b=>b.style.height=(6+Math.random()*40)+'px')},90)}
+let mr,ch=[],blob,url;const btnR=document.getElementById('rec'),aud=document.getElementById('aud'),st=document.getElementById('st'),down=document.getElementById('down');
+btnR.onclick=async()=>{if(mr&&mr.state=='recording'){mr.stop();return}try{const stream=await navigator.mediaDevices.getUserMedia({audio:true});AC();mr=new MediaRecorder(stream);ch=[];mr.ondataavailable=e=>ch.push(e.data);mr.onstart=()=>{btnR.textContent='⏹️ PARA DE GRABAR';btnR.classList.add('rec');st.textContent='🔴 GRABANDO!';animW(true)};mr.onstop=()=>{blob=new Blob(ch,{type:'audio/webm'});url=URL.createObjectURL(blob);aud.src=url;aud.style.display='block';down.style.display='block';btnR.textContent='🎙️ Grabar de nuevo';btnR.classList.remove('rec');st.textContent='✅ Grabado!';animW(false);stream.getTracks().forEach(t=>t.stop())};mr.start()}catch(e){alert('Permiso micro: '+e.message)}};
+down.onclick=()=>{const a=document.createElement('a');a.href=url;a.download='mi-voz-jeremias.webm';a.click()};
+let pattern=[[1,0,0,0,1,0,0,0],[0,0,1,0,0,0,1,0],[1,1,1,1,1,1,1,1]];const seqEl=document.getElementById('seq');['KICK','SNARE','HIHAT'].forEach((name,r)=>{const row=document.createElement('div');row.className='seq';row.innerHTML=`<b>${name}</b>`+[...Array(8)].map((_,c)=>`<div class="step ${pattern[r][c]?'on':''}" data-r="${r}" data-c="${c}"></div>`).join('');seqEl.appendChild(row)});seqEl.addEventListener('click',e=>{if(!e.target.classList.contains('step'))return;const r=+e.target.dataset.r,c=+e.target.dataset.c;pattern[r][c]^=1;e.target.classList.toggle('on')});
+let cur=0,tim,playing=false;function tick(){['kick','snare','hihat'].forEach((s,i)=>{if(pattern[i][cur])sound(s)});document.querySelectorAll('.step').forEach(el=>el.style.outline='');document.querySelectorAll(`[data-c="${cur}"]`).forEach(el=>el.style.outline='2px solid #fff');cur=(cur+1)%8}
+document.getElementById('play').onclick=()=>{if(playing)return;playing=true;AC();cur=0;tim=setInterval(tick,250);document.getElementById('play').textContent='🔥 SONANDO...'};
+document.getElementById('stop').onclick=()=>{playing=false;clearInterval(tim);document.getElementById('play').textContent='🥁 PLAY Ritmo';document.querySelectorAll('.step').forEach(el=>el.style.outline='')};
+document.getElementById('ia').onclick=()=>{AC();document.getElementById('iaSt').textContent='Creando hit...';const sc=[130,146,164,174,196,220,246,261,293,329,392];let t=0;for(let i=0;i<16;i++){setTimeout(()=>sound('note',sc[Math.floor(Math.random()*sc.length)]* (Math.random()>0.6?2:1)),t*280);t++}setTimeout(()=>document.getElementById('iaSt').textContent='🔥 Hit listo! PLAY',5000)};
+document.getElementById('bass').onclick=()=>{AC();[55,55,82,73,55,110,82,73].forEach((f,i)=>setTimeout(()=>sound('note',f),i*400))};
+document.getElementById('exp').onclick=()=>{if(!url){alert('Primero graba tu voz arriba');return}const a=document.createElement('a');a.href=url;a.download='MI-CANCION.webm';a.click();};
+document.getElementById('share').onclick=async()=>{const u=location.href;if(navigator.share){try{await navigator.share({title:'Mi Estudio DJ PRO',url:u})}catch{}}else{navigator.clipboard.writeText(u);alert('Link copiado: '+u)}};
+</script>
+</body>
+</html>
